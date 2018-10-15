@@ -1,0 +1,17 @@
+# to delete files from large directory(having files in millions) in chunks
+# which is taking too much time to delete and CPU uitls
+
+
+
+#following command searces for files, creates/modified between partiuclar directory, and writes them in files_to_delete.sh file
+find ./ -newermt "2018-02-01" ! -newermt "2018-04-01" > files_to_delete.sh
+
+#now open files_to_delete.sh in vim , and add rm -rf infront of everyline(by using following command) and save
+:%s/^/rm -rf /g
+
+#The general pattern for search and replace is:
+#	:s/search/replace/
+
+
+#now run the sh file, and one by one files will be delete
+sh files_to_delete.sh
