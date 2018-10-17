@@ -1,0 +1,44 @@
+#use these functions in mongodb shell to
+#move documents from one collection to another
+
+
+function insertBatch(collection, documents) {
+  var bulkInsert = db[collection].initializeUnorderedBulkOp();
+  var insertedIds = [];
+  var id;
+  documents.forEach(function(doc) {
+    id = doc._id;
+    // Insert without raising an error for duplicates
+    bulkInsert.find({_id: id}).upsert().replaceOne(doc);
+    insertedIds.push(id);
+  });
+  bulkInsert.execute();
+  return insertedIds;
+}
+
+function deleteBatch(collection, documents) {
+  var bulkRemove = db[collection].initializeUnorderedBulkOp();
+  documents.forEach(function(doc) {
+    bulkRemove.find({_id: doc._id}).removeOne();
+  });
+  bulkRemove.execute();
+}
+
+function moveDocuments(sourceCollection,targetCollection,filter, batchSize) {
+  print(db);
+  var count;
+  print(filter);
+  print(db[sourceCollection].find(filter).count());
+  while ((count = db[sourceCollection].find(filter).count()) > 0) {
+    print(count + " documents remaining");
+    sourceDocs = db[sourceCollection].find(filter).limit(batchSize);
+    idsOfCopiedDocs = insertBatch(targetCollection, sourceDocs);
+    targetDocs = db[targetCollection].find({_id: {$in: idsOfCopiedDocs}});
+    deleteBatch(sourceCollection, targetDocs);
+  }
+  print("Done!")
+}
+
+
+
+moveDocuments('collection_to_move_from','collection_to_move_to',{'search' : 'query'}, 1000)
